@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+            margin: 50px;
+            background-color: #f5f5f5;
+        }
+
+        h1 {
+            color: #333;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        #game-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin: 20px auto;
+        }
+
+        .card {
+            width: 100px;
+            height: 100px;
+            border: 5px solid #333;
+            border-radius: 10px;
+            cursor: pointer;
+            position: relative;
+            perspective: 1000px;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .flipped {
+            transform: rotateY(180deg);
+        }
+
+        .matched {
+            visibility: hidden;
+        }
+
+        #score-container {
+            width: 400px;
+            margin: auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        #score {
+            font-size: 24px;
+            color: #333;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        #timer {
+            font-size: 18px;
+            color: #333;
+        }
+
+        #buttons {
+            margin-top: 20px;
+        }
+
+        button {
+            font-size: 16px;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+    </style>
+    <title>Matching Pairs Game</title>
+</head>
+<body>
+    <h1>Matching Pairs Game</h1>
+    <div id="score-container">
+        <div id="score">Pares encontrados: 0</div>
+        <div id="timer">Tempo: <span id="time">60</span>s</div>
+    </div>
+    <div id="game-container"></div>
+    <div id="buttons">
+        <button onclick="startGame()">Iniciar</button>
+        <button onclick="restartGame()" style="display: none;">Reiniciar</button>
+    </div>
+
+    <script>
+        let pairsFound = 0;
+        let time = 60; // Tempo inicial em segundos
+        let gameInterval;
+        let selectedCards = [];
+
+        const cardImages = [
+            'https://iwapin.com/images/company/hamburgueria.png',
+            'https://iwapin.com/images/company/sushi1.png',
+            'https://iwapin.com/images/company/comida.oriental.png',
+            'https://iwapin.com/images/company/pizza.png',
+            'https://iwapin.com/images/company/sorvetes.png',
+            'https://iwapin.com/images/company/comida.mexicana.png',
+            'https://iwapin.com/images/company/lanchonete.png',
+        ];
+
+        // Duplica as imagens para criar os pares
+        const cardImagesPairs = [...cardImages, ...cardImages];
+
+        function getRandomCardImage() {
+            const index = Math.floor(Math.random() * cardImagesPairs.length);
+            const cardImage = cardImagesPairs.splice(index, 1)[0];
+            return cardImage;
+        }
+
+        function createCard(image) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `<img src="${image}" alt="Card Image">`;
+            card.addEventListener('click', () => {
+                if (selectedCards.length < 2 && !selectedCards.includes(card) && !card.classList.contains('flipped')) {
+                    selectedCards.push(card);
+                    card.classList.add('flipped');
+                    if (selectedCards.length === 2) {
+                        setTimeout(checkMatch, 500);
+                    }
+                }
+            });
+
+            document.getElementById('game-container').appendChild(card);
+        }
+
+        function checkMatch() {
+            const [card1, card2] = selectedCards;
+            const image1 = card1.querySelector('img').src;
+            const image2 = card2.querySelector('img').src;
+
+            if (image1 === image2) {
+                pairsFound++;
+                updateScore();
+                selectedCards.forEach(card => {
+                    card.classList.add('flipped', 'matched');
+                    setTimeout(() => {
+                        card.style.visibility = 'hidden'; // Esconde a carta da tela
+                    }, 300);
+                });
+                selectedCards = [];
+
+                if (pairsFound === cardImages.length) {
+                    endGame();
+                }
+            } else {
+                selectedCards.forEach(card => {
+                    card.classList.remove('flipped');
+                });
+                selectedCards = [];
+            }
+        }
+
+        function updateScore() {
+            document.getElementById('score').innerText = 'Pares encontrados: ' + pairsFound;
+        }
+
+        function updateTimer() {
+            document.getElementById('time').innerText = time;
+        }
+
+        function startGame() {
+            pairsFound = 0;
+            time = 60;
+            updateScore();
+            updateTimer();
+
+            document.getElementById('buttons').style.display = 'none';
+            document.getElementById('game-container').innerHTML = ''; // Limpa o conteúdo do contêiner
+
+            // Embaralha as imagens para diferentes posições a cada jogo
+            cardImagesPairs.sort(() => Math.random() - 0.5);
+
+            cardImagesPairs.forEach(image => createCard(image));
+
+            gameInterval = setInterval(() => {
+                if (time > 0) {
+                    time--;
+                    updateTimer();
+                } else {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function endGame() {
+            clearInterval(gameInterval);
+            document.getElementById('buttons').style.display = 'block';
+            alert('Fim do jogo! Pares encontrados: ' + pairsFound);
+        }
+
+        function restartGame() {
+            document.getElementById('buttons').style.display = 'none';
+            startGame();
+        }
+    </script>
+</body>
+</html>
